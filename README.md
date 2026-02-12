@@ -41,20 +41,16 @@ PIRA is a **codec-agnostic adapter** that preserves pitch and tonal information 
 ```
 Input Audio → [Frozen Codec Encoder] → Latent [B, D, T]
                                            ↓
-                        ┌──────────────────┴──────────────────┐
-                        │  F0/UV → Pitch Injector (trainable) │
+                        ┌──────────────────┴───────────────────┐
+                        │  F0/UV → Pitch Injector (trainable)  │
                         │  Latent + UV → Confidence (trainable)│
-                        │  Residual Fusion: z' = z + α⊙R      │
-                        └──────────────────┬──────────────────┘
+                        │  Residual Fusion: z' = z + α ⊙ R    │
+                        └──────────────────┬───────────────────┘
                                            ↓
               [Frozen Codec Decoder] → Reconstructed Audio
                                            ↓
                                     CREPE Embedding Loss
 ```
-
-**Key**: Codec is frozen, only ~1.25M adapter parameters are trained.
-
----
 
 ## Installation
 
@@ -235,7 +231,7 @@ How to find these:
 - `latent_dim`: Check codec's encoder output channels
 - `frame_rate = sample_rate / hop_length`
 
-### Universal Parameters (Works for All Codecs)
+### Universal Parameters
 
 ```yaml
 model:
@@ -245,7 +241,7 @@ model:
   use_f0_quantizer: true
 ```
 
-### Loss Weights (from Paper)
+### Loss Weights
 
 ```yaml
 loss:
