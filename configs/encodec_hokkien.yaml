@@ -1,0 +1,51 @@
+# PIRA Configuration for EnCodec + Hokkien
+# Based on paper experiments: Section 3
+
+# Dataset
+data:
+  csv_path: "data/hokkien/train.csv"  # CSV with columns: filename, text
+  audio_root: "data/hokkien/audio"     # Directory containing audio files
+  val_size: 100                        # Number of validation samples
+
+# Codec Configuration (EnCodec 24kHz)
+codec:
+  type: "encodec"
+  sample_rate: 24000
+  bandwidth: 1.5    # kbps (paper uses 1.5 kbps = 2 codebooks)
+  latent_dim: 128   # EnCodec latent dimension
+  frame_rate: 75    # 24000 / 320 = 75 Hz
+
+# Model Architecture (Universal)
+model:
+  hidden_dim: 256  # D_h in paper
+  dilation_rates: [1, 3, 9, 27, 81, 243]  # Base-3 dilation, RF=729 frames
+  use_confidence: true
+  use_f0_quantizer: true
+  f0_n_bins: 16  # 4-bit F0 quantization (as per paper)
+
+# Loss Weights (from paper Section 3.2)
+loss:
+  lambda_l1: 0.1      # Time-domain reconstruction
+  lambda_stft: 1.0    # Multi-resolution STFT
+  lambda_mel: 1.0     # Mel-spectrogram
+  lambda_crepe: 30    # CREPE perceptual loss (CORE!)
+
+# Training
+training:
+  num_epochs: 50
+  batch_size: 16
+  learning_rate: 1e-3
+  grad_clip_norm: 1.0
+  early_stopping_patience: 10
+  use_scheduler: false
+
+# Device
+device:
+  use_cuda: true
+  gpu_id: 0
+  num_workers: 4
+
+# Logging
+logging:
+  save_dir: "checkpoints/encodec_hokkien"
+  log_file: "training.log"

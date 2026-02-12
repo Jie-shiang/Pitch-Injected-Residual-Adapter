@@ -1,0 +1,63 @@
+# PIRA: Pitch-Injected Residual Adapter
+# Requirements for training and evaluation
+
+# Core Deep Learning
+torch==2.0.1
+torchaudio==2.0.2
+
+# Audio Processing
+librosa==0.10.1
+soundfile==0.12.1
+resampy==0.4.2
+
+# F0 Extraction & Pitch
+torchcrepe==0.0.20      # CREPE perceptual loss (core innovation!)
+pyworld==0.3.4          # WORLD F0 extraction
+
+# Training Utilities
+numpy==1.24.3
+scipy==1.11.1
+pyyaml==6.0.1
+tqdm==4.66.1
+einops==0.7.0
+
+# Evaluation (optional)
+jiwer==3.0.3            # For CER/WER calculation
+
+# Testing (development only)
+pytest==7.4.3
+pytest-cov==4.1.0
+
+#==================================================================================
+# Codec-Specific Dependencies
+# Install the codec you want to use. Examples:
+#==================================================================================
+
+# For EnCodec (Meta AI):
+# encodec==0.1.1
+
+# For DAC (Descript):
+# descript-audio-codec==1.0.0
+
+# For Mimi (Kyutai):
+# Install audiocraft from source: https://github.com/facebookresearch/audiocraft
+
+# For WavTokenizer:
+# Install from source: https://github.com/jishengpeng/WavTokenizer
+
+# For BigCodec:
+# Install from source: https://github.com/Aria-K-Alethia/BigCodec
+
+#==================================================================================
+# Notes
+#==================================================================================
+# 1. torch==2.0.1 is tested and stable. Newer versions should work but may
+#    have API changes.
+#
+# 2. torchcrepe==0.0.20 is critical - newer versions may break CREPE loss.
+#
+# 3. For GPU support, install PyTorch with CUDA:
+#    pip install torch==2.0.1 torchaudio==2.0.2 --index-url https://download.pytorch.org/whl/cu118
+#
+# 4. Some codecs require separate installation from source repositories.
+#==================================================================================
