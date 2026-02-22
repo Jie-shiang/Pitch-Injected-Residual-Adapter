@@ -2,10 +2,6 @@
 
 **Lightweight, plug-and-play adapter for preserving tonal information in neural audio codecs**
 
-[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
-[![Python 3.9+](https://img.shields.io/badge/python-3.9+-blue.svg)](https://www.python.org/downloads/)
-[![PyTorch](https://img.shields.io/badge/PyTorch-2.0%2B-red.svg)](https://pytorch.org/)
-
 ---
 
 ## Overview
@@ -254,11 +250,3 @@ loss:
 **Tuning tips**:
 - Increase `lambda_crepe` (→ 50) if pitch quality is poor
 - Decrease `lambda_crepe` (→ 10) if audio quality degrades
-
----
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file.
-
----
