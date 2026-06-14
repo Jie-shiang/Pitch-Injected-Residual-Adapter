@@ -2,6 +2,13 @@
 
 **Lightweight, plug-and-play adapter for preserving tonal information in neural audio codecs**
 
+[![Demo Page](https://img.shields.io/badge/Demo-GitHub%20Pages-blue)](https://jie-shiang.github.io/Pitch-Injected-Residual-Adapter/)
+[![Paper](https://img.shields.io/badge/Paper-Interspeech%202026-green)](https://github.com/Jie-shiang/Pitch-Injected-Residual-Adapter)
+
+> **[Demo Page](https://jie-shiang.github.io/Pitch-Injected-Residual-Adapter/)** — Audio samples and F0 comparisons across 5 codecs × 3 tonal languages
+
+*Jie-Shiang Yang, Ya-Tse Wu, Chi-Chun Lee — National Tsing Hua University — Interspeech 2026*
+
 ---
 
 ## Overview
@@ -59,8 +66,8 @@ Input Audio → [Frozen Codec Encoder] → Latent [B, D, T]
 ### Install
 
 ```bash
-git clone https://github.com/your-username/PIRA.git
-cd PIRA
+git clone https://github.com/Jie-shiang/Pitch-Injected-Residual-Adapter.git
+cd Pitch-Injected-Residual-Adapter
 pip install -r requirements.txt
 
 # Install PyTorch with CUDA (if needed)

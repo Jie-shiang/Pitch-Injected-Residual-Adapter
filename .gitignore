@@ -50,6 +50,9 @@ data/csv/
 *.mp3
 *.flac
 
+# Exception: demo page audio files
+!docs/audio/**/*.wav
+
 # F0 cache
 f0_cache/
 *.pkl

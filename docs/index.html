@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PIRA: Pitch-Injected Residual Adapter Demo</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", "Arial", sans-serif;
+      background: #fff;
+      color: #111;
+      line-height: 1.65;
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2.5rem 1.5rem 4rem;
+    }
+
+    /* ── Header ── */
+    header { text-align: center; margin-bottom: 2rem; border-bottom: 1px solid #ddd; padding-bottom: 1.5rem; }
+    header h1 { font-size: 1.55rem; font-weight: 700; line-height: 1.3; margin-bottom: 0.5rem; }
+    header .subtitle { font-size: 0.95rem; color: #555; margin-bottom: 0.8rem; }
+    header .links a {
+      display: inline-block;
+      margin: 0 0.4rem;
+      padding: 0.25rem 0.75rem;
+      border: 1px solid #333;
+      border-radius: 3px;
+      font-size: 0.85rem;
+      text-decoration: none;
+      color: #333;
+    }
+    header .links a:hover { background: #f0f0f0; }
+
+    /* ── Section titles ── */
+    h2 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      margin: 2.5rem 0 0.6rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 1px solid #e0e0e0;
+    }
+
+    /* ── Abstract ── */
+    .abstract {
+      background: #fafafa;
+      border-left: 3px solid #888;
+      padding: 0.9rem 1.1rem;
+      font-size: 0.92rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ── Codec card ── */
+    .codec-card {
+      border: 1px solid #d8d8d8;
+      border-radius: 4px;
+      margin-bottom: 0.7rem;
+      overflow: hidden;
+    }
+    .codec-header {
+      display: flex;
+      align-items: center;
+      gap: 0.7rem;
+      padding: 0.55rem 0.9rem;
+      background: #f5f5f5;
+      cursor: pointer;
+      user-select: none;
+    }
+    .codec-header:hover { background: #eee; }
+    .codec-name {
+      font-weight: 700;
+      font-size: 1rem;
+      min-width: 120px;
+    }
+    .codec-meta {
+      font-size: 0.80rem;
+      color: #555;
+      flex: 1;
+      font-variant-numeric: tabular-nums;
+    }
+    .lang-select {
+      font-size: 0.82rem;
+      font-family: "Inter", "Arial", sans-serif;
+      padding: 0.18rem 0.4rem;
+      border: 1px solid #aaa;
+      border-radius: 3px;
+      background: #fff;
+      cursor: pointer;
+    }
+    .toggle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 26px;
+      height: 26px;
+      border: none;
+      border-radius: 50%;
+      background: #555;
+      color: #fff;
+      font-size: 1rem;
+      cursor: pointer;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    .toggle-btn:hover { background: #333; }
+    .toggle-btn.open  { background: #2980b9; }
+
+    /* ── Codec body ── */
+    .codec-body { display: none; padding: 0.8rem 1rem 1rem; }
+    .codec-body.open { display: block; }
+
+    /* ── Sample row: [img | play-cell] ── */
+    .sample-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 0.25rem;
+    }
+    .sample-row img {
+      flex: 1;
+      min-width: 0;
+      height: auto;
+      display: block;
+      border: 1px solid #e8e8e8;
+    }
+    .play-cell {
+      width: 90px;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.35rem;
+    }
+    .play-label {
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .play-label.gt       { color: #27ae60; }
+    .play-label.pretrain { color: #c0392b; }
+    .play-label.pira     { color: #2980b9; }
+
+    /* ── Custom play button ── */
+    .play-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 6px;
+      background: #2980b9;
+      color: #fff;
+      font-size: 1.2rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.15s;
+      flex-shrink: 0;
+    }
+    .play-btn:hover  { background: #1f6391; }
+    .play-btn.active { background: #c0392b; }
+
+    /* ── UTMOS table ── */
+    .table-wrap { overflow-x: auto; margin-top: 0.5rem; }
+    table {
+      border-collapse: collapse;
+      font-size: 0.82rem;
+      font-variant-numeric: tabular-nums;
+      width: 100%;
+      table-layout: fixed;
+    }
+    col.col-codec  { width: 110px; }
+    col.col-data   { width: calc((100% - 110px) / 9); }
+    thead tr { background: #f0f0f0; }
+    th, td {
+      border: 1px solid #d0d0d0;
+      padding: 0.30rem 0.4rem;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    th { font-weight: 700; }
+    td:first-child, th:first-child { text-align: left; padding-left: 0.8rem; }
+    tr:nth-child(even) { background: #fafafa; }
+    .best { font-weight: 700; }
+    caption {
+      caption-side: top;
+      text-align: left;
+      font-size: 0.82rem;
+      color: #444;
+      margin-bottom: 0.5rem;
+      line-height: 1.5;
+    }
+
+    /* ── Footer ── */
+    footer {
+      margin-top: 3rem;
+      padding-top: 1rem;
+      border-top: 1px solid #ddd;
+      font-size: 0.80rem;
+      color: #777;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ══════════ HEADER ══════════ -->
+<header>
+  <h1>Pitch-Injected Residual Adapter for Tonal Language<br>in Neural Audio Codec</h1>
+  <p class="subtitle">Jie-Shiang Yang, Ya-Tse Wu, Chi-Chun Lee &nbsp;·&nbsp; National Tsing Hua University</p>
+  <p class="subtitle" style="margin-top:0.3rem;">Interspeech 2026</p>
+  <div class="links">
+    <a href="https://github.com/Jie-shiang/Pitch-Injected-Residual-Adapter" target="_blank">&#128196; Code</a>
+  </div>
+</header>
+
+<!-- ══════════ ABSTRACT ══════════ -->
+<h2>Abstract</h2>
+<div class="abstract">
+  Neural Audio Codecs (NACs) achieve high-fidelity reconstruction at low bitrates but remain insensitive to
+  fundamental frequency (F0) distortion&mdash;a critical limitation for tonal languages, which comprise over 40%
+  of the world&rsquo;s languages and use F0 contour for lexical distinction.
+  We propose <strong>PIRA</strong> (Pitch-Injected Residual Adapter), a lightweight plug-and-play module that
+  restores tonal information in <em>frozen</em> NACs through explicit F0 and voiced/unvoiced side-information
+  injection, requiring no codec retraining.
+  With only <strong>1.25M</strong> trainable parameters, PIRA reduces codec-induced Tone Error Rate (dTER) by
+  <strong>35.7%</strong> on average across three typologically diverse tonal languages and five pretrained codecs,
+  while preserving English quality and adding &le;0.4&thinsp;kbps bitrate overhead.
+</div>
+
+<!-- ══════════ SECTION 1 — AUDIO DEMO ══════════ -->
+<h2>1 &nbsp; Audio Demo</h2>
+<p style="font-size:0.88rem;color:#555;margin-bottom:1rem;">
+  Each codec row shows F0 contour plots and audio samples for a representative utterance.
+  Click ▼ to expand. Use the language selector to switch dataset.
+  Colors: <span style="color:#27ae60;font-weight:600;">green = Ground Truth</span>,
+          <span style="color:#c0392b;font-weight:600;">red = Pretrain</span>,
+          <span style="color:#2980b9;font-weight:600;">blue = PIRA</span>.
+</p>
+
+<!-- ── BigCodec ── -->
+<div class="codec-card">
+  <div class="codec-header" onclick="toggleCard('bigcodec')">
+    <span class="codec-name">BigCodec</span>
+    <span class="codec-meta">80 Hz &middot; 1.04 kbps</span>
+    <select class="lang-select" id="sel-bigcodec" onclick="event.stopPropagation()" onchange="switchLang('bigcodec', this.value)">
+      <option value="hokkien">TTASRCE (Hokkien)</option>
+      <option value="mdcc">MDCC (Cantonese)</option>
+      <option value="vivos">VIVOS (Vietnamese)</option>
+    </select>
+    <button class="toggle-btn" id="btn-bigcodec">▼</button>
+  </div>
+  <div class="codec-body" id="body-bigcodec">
+    <div class="sample-row">
+      <img id="img-bigcodec-gt"       src="audio/BigCodec_hokkien/f0_gt.png"       alt="F0 Ground Truth" />
+      <div class="play-cell">
+        <span class="play-label gt">GT</span>
+        <button class="play-btn" id="pbtn-bigcodec-gt" onclick="togglePlay('bigcodec','gt')">&#9654;</button>
+        <audio id="aud-bigcodec-gt" src="audio/BigCodec_hokkien/original.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-bigcodec-pretrain" src="audio/BigCodec_hokkien/f0_pretrain.png" alt="F0 Pretrain" />
+      <div class="play-cell">
+        <span class="play-label pretrain">Pretrain</span>
+        <button class="play-btn" id="pbtn-bigcodec-pretrain" onclick="togglePlay('bigcodec','pretrain')">&#9654;</button>
+        <audio id="aud-bigcodec-pretrain" src="audio/BigCodec_hokkien/pretrain.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-bigcodec-pira"     src="audio/BigCodec_hokkien/f0_pira.png"     alt="F0 PIRA" />
+      <div class="play-cell">
+        <span class="play-label pira">PIRA</span>
+        <button class="play-btn" id="pbtn-bigcodec-pira" onclick="togglePlay('bigcodec','pira')">&#9654;</button>
+        <audio id="aud-bigcodec-pira" src="audio/BigCodec_hokkien/pira.wav"></audio>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── WavTokenizer ── -->
+<div class="codec-card">
+  <div class="codec-header" onclick="toggleCard('wavtokenizer')">
+    <span class="codec-name">WavTokenizer</span>
+    <span class="codec-meta">75 Hz &middot; 0.90 kbps</span>
+    <select class="lang-select" id="sel-wavtokenizer" onclick="event.stopPropagation()" onchange="switchLang('wavtokenizer', this.value)">
+      <option value="hokkien">TTASRCE (Hokkien)</option>
+      <option value="mdcc">MDCC (Cantonese)</option>
+      <option value="vivos">VIVOS (Vietnamese)</option>
+    </select>
+    <button class="toggle-btn" id="btn-wavtokenizer">▼</button>
+  </div>
+  <div class="codec-body" id="body-wavtokenizer">
+    <div class="sample-row">
+      <img id="img-wavtokenizer-gt"       src="audio/WavTokenizer_hokkien/f0_gt.png"       alt="F0 Ground Truth" />
+      <div class="play-cell">
+        <span class="play-label gt">GT</span>
+        <button class="play-btn" id="pbtn-wavtokenizer-gt" onclick="togglePlay('wavtokenizer','gt')">&#9654;</button>
+        <audio id="aud-wavtokenizer-gt" src="audio/WavTokenizer_hokkien/original.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-wavtokenizer-pretrain" src="audio/WavTokenizer_hokkien/f0_pretrain.png" alt="F0 Pretrain" />
+      <div class="play-cell">
+        <span class="play-label pretrain">Pretrain</span>
+        <button class="play-btn" id="pbtn-wavtokenizer-pretrain" onclick="togglePlay('wavtokenizer','pretrain')">&#9654;</button>
+        <audio id="aud-wavtokenizer-pretrain" src="audio/WavTokenizer_hokkien/pretrain.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-wavtokenizer-pira"     src="audio/WavTokenizer_hokkien/f0_pira.png"     alt="F0 PIRA" />
+      <div class="play-cell">
+        <span class="play-label pira">PIRA</span>
+        <button class="play-btn" id="pbtn-wavtokenizer-pira" onclick="togglePlay('wavtokenizer','pira')">&#9654;</button>
+        <audio id="aud-wavtokenizer-pira" src="audio/WavTokenizer_hokkien/pira.wav"></audio>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EnCodec ── -->
+<div class="codec-card">
+  <div class="codec-header" onclick="toggleCard('encodec')">
+    <span class="codec-name">EnCodec</span>
+    <span class="codec-meta">75 Hz &middot; 1.50 kbps</span>
+    <select class="lang-select" id="sel-encodec" onclick="event.stopPropagation()" onchange="switchLang('encodec', this.value)">
+      <option value="hokkien">TTASRCE (Hokkien)</option>
+      <option value="mdcc">MDCC (Cantonese)</option>
+      <option value="vivos">VIVOS (Vietnamese)</option>
+    </select>
+    <button class="toggle-btn" id="btn-encodec">▼</button>
+  </div>
+  <div class="codec-body" id="body-encodec">
+    <div class="sample-row">
+      <img id="img-encodec-gt"       src="audio/EnCodec_hokkien/f0_gt.png"       alt="F0 Ground Truth" />
+      <div class="play-cell">
+        <span class="play-label gt">GT</span>
+        <button class="play-btn" id="pbtn-encodec-gt" onclick="togglePlay('encodec','gt')">&#9654;</button>
+        <audio id="aud-encodec-gt" src="audio/EnCodec_hokkien/original.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-encodec-pretrain" src="audio/EnCodec_hokkien/f0_pretrain.png" alt="F0 Pretrain" />
+      <div class="play-cell">
+        <span class="play-label pretrain">Pretrain</span>
+        <button class="play-btn" id="pbtn-encodec-pretrain" onclick="togglePlay('encodec','pretrain')">&#9654;</button>
+        <audio id="aud-encodec-pretrain" src="audio/EnCodec_hokkien/pretrain.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-encodec-pira"     src="audio/EnCodec_hokkien/f0_pira.png"     alt="F0 PIRA" />
+      <div class="play-cell">
+        <span class="play-label pira">PIRA</span>
+        <button class="play-btn" id="pbtn-encodec-pira" onclick="togglePlay('encodec','pira')">&#9654;</button>
+        <audio id="aud-encodec-pira" src="audio/EnCodec_hokkien/pira.wav"></audio>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DAC ── -->
+<div class="codec-card">
+  <div class="codec-header" onclick="toggleCard('dac')">
+    <span class="codec-name">DAC</span>
+    <span class="codec-meta">50 Hz &middot; 1.00 kbps</span>
+    <select class="lang-select" id="sel-dac" onclick="event.stopPropagation()" onchange="switchLang('dac', this.value)">
+      <option value="hokkien">TTASRCE (Hokkien)</option>
+      <option value="mdcc">MDCC (Cantonese)</option>
+      <option value="vivos">VIVOS (Vietnamese)</option>
+    </select>
+    <button class="toggle-btn" id="btn-dac">▼</button>
+  </div>
+  <div class="codec-body" id="body-dac">
+    <div class="sample-row">
+      <img id="img-dac-gt"       src="audio/DAC_hokkien/f0_gt.png"       alt="F0 Ground Truth" />
+      <div class="play-cell">
+        <span class="play-label gt">GT</span>
+        <button class="play-btn" id="pbtn-dac-gt" onclick="togglePlay('dac','gt')">&#9654;</button>
+        <audio id="aud-dac-gt" src="audio/DAC_hokkien/original.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-dac-pretrain" src="audio/DAC_hokkien/f0_pretrain.png" alt="F0 Pretrain" />
+      <div class="play-cell">
+        <span class="play-label pretrain">Pretrain</span>
+        <button class="play-btn" id="pbtn-dac-pretrain" onclick="togglePlay('dac','pretrain')">&#9654;</button>
+        <audio id="aud-dac-pretrain" src="audio/DAC_hokkien/pretrain.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-dac-pira"     src="audio/DAC_hokkien/f0_pira.png"     alt="F0 PIRA" />
+      <div class="play-cell">
+        <span class="play-label pira">PIRA</span>
+        <button class="play-btn" id="pbtn-dac-pira" onclick="togglePlay('dac','pira')">&#9654;</button>
+        <audio id="aud-dac-pira" src="audio/DAC_hokkien/pira.wav"></audio>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── Mimi ── -->
+<div class="codec-card">
+  <div class="codec-header" onclick="toggleCard('mimi')">
+    <span class="codec-name">Mimi</span>
+    <span class="codec-meta">12.5 Hz &middot; 1.10 kbps</span>
+    <select class="lang-select" id="sel-mimi" onclick="event.stopPropagation()" onchange="switchLang('mimi', this.value)">
+      <option value="hokkien">TTASRCE (Hokkien)</option>
+      <option value="mdcc">MDCC (Cantonese)</option>
+      <option value="vivos">VIVOS (Vietnamese)</option>
+    </select>
+    <button class="toggle-btn" id="btn-mimi">▼</button>
+  </div>
+  <div class="codec-body" id="body-mimi">
+    <div class="sample-row">
+      <img id="img-mimi-gt"       src="audio/Mimi_hokkien/f0_gt.png"       alt="F0 Ground Truth" />
+      <div class="play-cell">
+        <span class="play-label gt">GT</span>
+        <button class="play-btn" id="pbtn-mimi-gt" onclick="togglePlay('mimi','gt')">&#9654;</button>
+        <audio id="aud-mimi-gt" src="audio/Mimi_hokkien/original.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-mimi-pretrain" src="audio/Mimi_hokkien/f0_pretrain.png" alt="F0 Pretrain" />
+      <div class="play-cell">
+        <span class="play-label pretrain">Pretrain</span>
+        <button class="play-btn" id="pbtn-mimi-pretrain" onclick="togglePlay('mimi','pretrain')">&#9654;</button>
+        <audio id="aud-mimi-pretrain" src="audio/Mimi_hokkien/pretrain.wav"></audio>
+      </div>
+    </div>
+    <div class="sample-row">
+      <img id="img-mimi-pira"     src="audio/Mimi_hokkien/f0_pira.png"     alt="F0 PIRA" />
+      <div class="play-cell">
+        <span class="play-label pira">PIRA</span>
+        <button class="play-btn" id="pbtn-mimi-pira" onclick="togglePlay('mimi','pira')">&#9654;</button>
+        <audio id="aud-mimi-pira" src="audio/Mimi_hokkien/pira.wav"></audio>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ SECTION 2 — UTMOS ══════════ -->
+<h2>2 &nbsp; Supplementary: Perceptual Quality (UTMOS)</h2>
+<p style="font-size:0.88rem;color:#555;margin-bottom:0.8rem;">
+  UTMOS scores (higher is better, scale 1&ndash;5) for Pretrain vs. PIRA across all codec&ndash;language pairs.
+  PIRA preserves perceptual quality while restoring tonal accuracy.
+</p>
+
+<div class="table-wrap">
+<table>
+  <colgroup>
+    <col class="col-codec">
+    <col class="col-data"><col class="col-data"><col class="col-data">
+    <col class="col-data"><col class="col-data"><col class="col-data">
+    <col class="col-data"><col class="col-data"><col class="col-data">
+  </colgroup>
+  <caption>Table S1. UTMOS perceptual quality scores. &Delta; = PIRA &minus; Pretrain.</caption>
+  <thead>
+    <tr>
+      <th rowspan="2">Codec</th>
+      <th colspan="3">TTASRCE (Hokkien)</th>
+      <th colspan="3">MDCC (Cantonese)</th>
+      <th colspan="3">VIVOS (Vietnamese)</th>
+    </tr>
+    <tr>
+      <th>Pretrain</th><th>PIRA</th><th>&Delta;</th>
+      <th>Pretrain</th><th>PIRA</th><th>&Delta;</th>
+      <th>Pretrain</th><th>PIRA</th><th>&Delta;</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>BigCodec</td>
+      <td>4.0915</td><td class="best">4.0888</td><td>&minus;0.0027</td>
+      <td>4.1809</td><td class="best">4.1910</td><td>+0.0101</td>
+      <td>4.0840</td><td class="best">4.1005</td><td>+0.0165</td>
+    </tr>
+    <tr>
+      <td>WavTokenizer</td>
+      <td>4.0961</td><td class="best">4.0964</td><td>+0.0003</td>
+      <td>4.0979</td><td class="best">4.0970</td><td>&minus;0.0009</td>
+      <td>3.7242</td><td class="best">3.7333</td><td>+0.0091</td>
+    </tr>
+    <tr>
+      <td>EnCodec</td>
+      <td>2.6288</td><td class="best">2.7324</td><td>+0.1036</td>
+      <td>2.4956</td><td class="best">2.6982</td><td>+0.2026</td>
+      <td>2.5603</td><td class="best">2.7763</td><td>+0.2160</td>
+    </tr>
+    <tr>
+      <td>DAC</td>
+      <td>4.0685</td><td class="best">4.0675</td><td>&minus;0.0010</td>
+      <td>4.1993</td><td class="best">4.2007</td><td>+0.0014</td>
+      <td>4.0153</td><td class="best">4.0183</td><td>+0.0030</td>
+    </tr>
+    <tr>
+      <td>Mimi</td>
+      <td>3.9753</td><td class="best">3.9745</td><td>&minus;0.0008</td>
+      <td>3.9360</td><td class="best">3.9522</td><td>+0.0162</td>
+      <td>4.0714</td><td class="best">4.0792</td><td>+0.0078</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<!-- ══════════ JAVASCRIPT ══════════ -->
+<script>
+  const FOLDER = {
+    bigcodec:     "BigCodec",
+    wavtokenizer: "WavTokenizer",
+    encodec:      "EnCodec",
+    dac:          "DAC",
+    mimi:         "Mimi",
+  };
+
+  // Currently playing audio element (for stopping on new play)
+  let currentAudio = null;
+  let currentBtn   = null;
+
+  function toggleCard(id) {
+    const body = document.getElementById("body-" + id);
+    const btn  = document.getElementById("btn-" + id);
+    const open = body.classList.toggle("open");
+    btn.classList.toggle("open", open);
+    btn.textContent = open ? "▲" : "▼";
+  }
+
+  function switchLang(id, lang) {
+    const prefix = FOLDER[id];
+    const dir    = "audio/" + prefix + "_" + lang + "/";
+    ["gt", "pretrain", "pira"].forEach(function(type) {
+      document.getElementById("img-" + id + "-" + type).src = dir + "f0_" + type + ".png";
+      const aud = document.getElementById("aud-" + id + "-" + type);
+      aud.src = dir + (type === "gt" ? "original.wav" : type + ".wav");
+      aud.load();
+      // reset button icon
+      const pbtn = document.getElementById("pbtn-" + id + "-" + type);
+      if (pbtn) { pbtn.textContent = "▶"; pbtn.classList.remove("active"); }
+    });
+  }
+
+  function togglePlay(id, type) {
+    const aud  = document.getElementById("aud-"  + id + "-" + type);
+    const pbtn = document.getElementById("pbtn-" + id + "-" + type);
+
+    // Stop whatever is currently playing (unless it's this same one)
+    if (currentAudio && currentAudio !== aud) {
+      currentAudio.pause();
+      currentAudio.currentTime = 0;
+      if (currentBtn) { currentBtn.textContent = "▶"; currentBtn.classList.remove("active"); }
+    }
+
+    if (aud.paused) {
+      aud.play();
+      pbtn.textContent = "⏹";
+      pbtn.classList.add("active");
+      currentAudio = aud;
+      currentBtn   = pbtn;
+      // When audio ends, reset button
+      aud.onended = function() {
+        pbtn.textContent = "▶";
+        pbtn.classList.remove("active");
+        currentAudio = null;
+        currentBtn   = null;
+      };
+    } else {
+      aud.pause();
+      aud.currentTime = 0;
+      pbtn.textContent = "▶";
+      pbtn.classList.remove("active");
+      currentAudio = null;
+      currentBtn   = null;
+    }
+  }
+</script>
+
+<footer>
+  Jie-Shiang Yang, Ya-Tse Wu, Chi-Chun Lee &mdash; National Tsing Hua University &mdash; Interspeech 2026
+</footer>
+
+</body>
+</html>
